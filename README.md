@@ -17,10 +17,14 @@ This search tool implements the core components of a search engine:
 - ✅ Case-insensitive full-text indexing
 - ✅ Inverted index with word statistics (frequency, positions)
 - ✅ Single-word and multi-word (AND) search queries
+- ✅ Phrase search using quotes (e.g., `"good friends"`)
+- ✅ Boolean queries with `AND`, `OR`, `NOT`, and parentheses
+- ✅ TF-IDF ranked retrieval via `rank` command
 - ✅ Persistent index storage to JSON file
 - ✅ Interactive command-line interface
 - ✅ Comprehensive error handling and logging
-- ✅ 60+ unit tests with 85%+ coverage
+- ✅ 68 unit/performance tests with broad coverage
+- ✅ GitHub Actions CI pipeline across Python 3.10-3.12
 
 ## Installation
 
@@ -140,6 +144,8 @@ Searches for pages containing all specified words (AND query).
 
 - Single word: Returns all pages containing that word
 - Multiple words: Returns pages containing ALL words
+- Phrase query: Use quotes, e.g. `find "good friends"`
+- Boolean query: Use operators, e.g. `find life AND NOT death`
 - Case-insensitive search
 - Results sorted alphabetically by URL
 
@@ -156,7 +162,21 @@ Results for query: 'indifference' (3 pages):
 Results for query: 'good friends' (1 page):
 
 1. https://quotes.toscrape.com/page/3/
+
+> find "good friends" OR life
+Results for query: '"good friends" OR life' (... pages)
 ```
+
+#### `rank <query>`
+Returns TF-IDF ranked results.
+
+```
+> rank "good friends" OR life
+```
+
+- Applies boolean/phrase filtering first
+- Ranks candidate pages by aggregated TF-IDF score
+- Returns highest-relevance pages first
 
 #### `help`
 Displays available commands and usage information.
@@ -327,7 +347,7 @@ python3 -m unittest tests.test_indexer.TestInvertedIndex.test_search_single_word
 
 ### Test Coverage
 
-The test suite includes 60 comprehensive tests:
+The test suite includes 68 comprehensive tests:
 
 - **test_crawler.py (18 tests)**: 
   - URL validation and filtering
@@ -353,10 +373,20 @@ The test suite includes 60 comprehensive tests:
   - Empty index handling
   - Result consistency
 
+- **test_advanced_search.py (6 tests)**:
+  - Phrase search correctness
+  - Boolean `AND`/`OR`/`NOT` behavior
+  - Parentheses precedence behavior
+  - Ranked output ordering and score formatting
+
+- **test_performance.py (2 tests)**:
+  - Large-index search latency checks
+  - Ranked query latency checks
+
 ### Test Results
 
 ```
-Ran 60 tests in 0.235s
+Ran 68 tests in 0.309s
 
 OK
 ```
@@ -373,17 +403,25 @@ OK
 
 ### Benchmarks
 
-On typical hardware with 50 pages:
+Synthetic benchmark (`python3 scripts/benchmark.py`) on 1,500 generated pages:
 
 | Operation | Time |
 |-----------|------|
-| Build Index | 5-10 minutes* |
-| Load Index | < 1 second |
-| Single Word Search | < 10 ms |
-| Multi-word Search | < 10 ms |
-| Print Word Info | < 5 ms |
+| Build Index | 0.0781 s |
+| Mean Query Latency | 3.575 ms |
+| P95 Query Latency | 11.020 ms |
+| Mean Ranked Latency | 36.756 ms |
+| P95 Ranked Latency | 87.495 ms |
 
-*Dominated by politeness window enforcement (6 seconds per request)
+For real crawling, total build time is still dominated by the required 6-second politeness window between HTTP requests.
+
+### Complexity Analysis
+
+- Index build: approximately O(T), where T is total token count across all pages
+- Single-word lookup: O(1) average dictionary access plus output size
+- AND query intersection: O(sum(posting list sizes)) in the worst case
+- Phrase query: O(C * P), where C is candidate pages and P is positional checks
+- Ranked retrieval: O(C * Q), where C is candidate pages and Q is query term count
 
 ### Scalability
 
@@ -449,6 +487,7 @@ The project follows best practices:
 - **Meaningful messages**: Describes what changed and why
 - **Incremental development**: Features added one at a time
 - **Clean history**: Logical progression of changes
+- **Release tagging**: Retroactive milestone tags and release tags
 
 View commit history:
 ```bash
@@ -460,6 +499,16 @@ Example:
 1e964b4 test: Add comprehensive test suite with 60 tests
 8da282f feat: Implement core search engine components
 ```
+
+## Continuous Integration
+
+CI workflow is provided in `.github/workflows/ci.yml` and runs on each push/pull request.
+
+- Python versions: 3.10, 3.11, 3.12
+- Steps:
+  - Install dependencies
+  - Run full unittest suite
+  - Run benchmark smoke check
 
 ## Error Handling
 
