@@ -6,6 +6,7 @@ Commands:
     load - Load a previously built index
     print - Display index information for a word
     find - Search for pages containing word(s)
+    rank - Search with TF-IDF ranking
 """
 
 import sys
@@ -156,6 +157,27 @@ class SearchTool:
             print(output)
         except Exception as e:
             logger.error(f"Error searching: {e}")
+
+    def cmd_rank(self, args: list) -> None:
+        """
+        Find pages using TF-IDF ranked retrieval.
+
+        Usage: rank <query>
+        """
+        if not self._check_index_loaded():
+            return
+
+        if not args or len(args) < 1:
+            logger.error("Usage: rank <query>")
+            return
+
+        query = " ".join(args)
+
+        try:
+            output = self.search_engine.format_rank_output(query)
+            print(output)
+        except Exception as e:
+            logger.error(f"Error ranking query: {e}")
     
     def _check_index_loaded(self) -> bool:
         """
@@ -207,6 +229,9 @@ class SearchTool:
                 
                 elif command == "find":
                     self.cmd_find(args)
+
+                elif command == "rank":
+                    self.cmd_rank(args)
                 
                 else:
                     logger.error(f"Unknown command: {command}")
@@ -235,6 +260,14 @@ Available Commands:
                      Examples:
                        find indifference
                        find good friends
+                                             find "good friends"
+                                             find good OR friendship
+                                             find life AND NOT death
+
+    rank <query>        Return TF-IDF ranked results for a query
+                                         Examples:
+                                             rank indifference
+                                             rank "good friends" OR life
 
   help                Show this help message
 

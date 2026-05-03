@@ -7,8 +7,8 @@ Case-insensitive indexing is used for search simplicity.
 """
 
 import re
+import math
 from typing import Dict, List, Set, Tuple
-from collections import defaultdict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -200,6 +200,72 @@ class InvertedIndex:
                 break
         
         return sorted(list(result_urls))
+
+    def get_indexed_urls(self) -> Set[str]:
+        """Return all unique URLs present in the index."""
+        urls: Set[str] = set()
+        for word_data in self.index.values():
+            for page in word_data['pages']:
+                urls.add(page['url'])
+        return urls
+
+    def get_page_frequency(self, word: str) -> int:
+        """Return how many pages contain the given word."""
+        return len(self.get_word_pages(word))
+
+    def get_term_frequency(self, url: str, word: str) -> int:
+        """Return the term frequency for a word in a specific URL."""
+        word_pages = self.get_word_pages(word)
+        for page in word_pages:
+            if page['url'] == url:
+                return page['frequency']
+        return 0
+
+    def get_positions_for_word_in_url(self, word: str, url: str) -> List[int]:
+        """Return token positions for a word in a specific URL."""
+        word_pages = self.get_word_pages(word)
+        for page in word_pages:
+            if page['url'] == url:
+                return page['positions']
+        return []
+
+    def compute_tfidf_scores(self, words: List[str], candidate_urls: Set[str] = None) -> Dict[str, float]:
+        """
+        Compute TF-IDF scores for candidate URLs over the query words.
+
+        Args:
+            words: Query words (assumed lowercase)
+            candidate_urls: Optional URL subset to score. If None, score all indexed URLs.
+
+        Returns:
+            Mapping of URL to aggregated TF-IDF score.
+        """
+        all_urls = self.get_indexed_urls()
+        if not all_urls:
+            return {}
+
+        if candidate_urls is None:
+            candidate_urls = all_urls
+
+        doc_count = len(all_urls)
+        scores: Dict[str, float] = {url: 0.0 for url in candidate_urls}
+
+        for word in words:
+            page_frequency = self.get_page_frequency(word)
+            if page_frequency == 0:
+                continue
+
+            # Smoothed IDF to avoid zero/inf edge cases.
+            idf = math.log((doc_count + 1) / (page_frequency + 1)) + 1.0
+
+            for url in candidate_urls:
+                tf = self.get_term_frequency(url, word)
+                if tf <= 0:
+                    continue
+                # Log-scaled TF reduces dominance of repeated terms.
+                scores[url] += (1.0 + math.log(tf)) * idf
+
+        return scores
     
     def get_statistics(self) -> Dict:
         """
