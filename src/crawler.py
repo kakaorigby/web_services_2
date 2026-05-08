@@ -73,20 +73,25 @@ class WebCrawler:
     def _extract_text_from_page(self, html: str) -> str:
         """
         Extract readable text content from HTML.
-        
+
         Args:
             html: HTML content as string
-            
+
         Returns:
             Extracted text content
         """
         try:
             soup = BeautifulSoup(html, 'html.parser')
-            
-            # Remove script and style elements
-            for script in soup(["script", "style"]):
-                script.decompose()
-            
+
+            # Remove script, style, and site-wide boilerplate so that
+            # nav elements (e.g. the "Top Ten tags" sidebar) are not
+            # indexed on every page and inflate results artificially.
+            for tag in soup(["script", "style", "footer"]):
+                tag.decompose()
+            for boilerplate_class in ["header-box", "tags-box"]:
+                for elem in soup.find_all("div", class_=boilerplate_class):
+                    elem.decompose()
+
             # Get text
             text = soup.get_text()
             

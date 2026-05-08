@@ -328,6 +328,8 @@ The inverted index is chosen because:
 
 ## Testing
 
+See [TESTING.md](TESTING.md) for the full testing documentation including strategy, mocking approach, and edge cases covered.
+
 ### Running Tests
 
 Run all tests:
@@ -349,29 +351,29 @@ python3 -m unittest tests.test_indexer.TestInvertedIndex.test_search_single_word
 
 The test suite includes 68 comprehensive tests:
 
-- **test_crawler.py (18 tests)**: 
+- **test_crawler.py (13 tests)**: 
   - URL validation and filtering
   - HTML text extraction
   - Link extraction
   - Politeness window enforcement
-  - Network error handling
+  - Network error handling (mocked)
   - Multi-page crawling
 
-- **test_indexer.py (21 tests)**:
+- **test_indexer.py (23 tests)**:
   - Word tokenization
   - Inverted index creation
   - Word frequency tracking
   - Case-insensitive search
   - AND queries
-  - Edge cases (empty content, special characters, etc.)
+  - Edge cases (empty content, special characters, numbers, very long text)
 
-- **test_search.py (21 tests)**:
+- **test_search.py (24 tests)**:
   - Single-word searches
   - Multi-word searches
   - Search output formatting
   - Word statistics display
   - Empty index handling
-  - Result consistency
+  - Result consistency and ordering
 
 - **test_advanced_search.py (6 tests)**:
   - Phrase search correctness
@@ -563,29 +565,37 @@ All output goes to console with timestamp and level information.
 - Check that Python version is 3.7+
 - Ensure `requests` and `beautifulsoup4` are installed
 
-## Future Enhancements
+## Extensions Beyond Requirements
 
-Potential improvements beyond coursework requirements:
+The following features were implemented beyond the core brief:
 
-1. **Ranking Algorithms**
-   - TF-IDF ranking for relevance
-   - PageRank-style importance scoring
+1. **TF-IDF Ranked Retrieval** (`rank` command)
+   - Log-scaled term frequency with smoothed IDF
+   - Results ordered by descending relevance score
 
-2. **Advanced Queries**
+2. **Advanced Query Processing**
    - OR queries (union of results)
-   - Phrase queries ("exact phrase")
-   - Boolean operators
+   - NOT queries (complement against full index)
+   - Phrase queries with consecutive position verification (e.g. `"good friends"`)
+   - Parenthesised expressions with correct operator precedence (NOT > AND > OR)
 
-3. **Performance Optimization**
-   - In-memory caching of index
-   - Incremental crawling
-   - Parallel request handling (respecting politeness window)
+3. **Performance Testing & Benchmarking**
+   - Latency tests for large-index search and ranked retrieval
+   - Synthetic benchmark script (`scripts/benchmark.py`) over 1,500 pages
 
-4. **Additional Features**
-   - Query suggestions
-   - Stemming/lemmatization
-   - Stop word removal
-   - Search result snippets
+4. **CI Pipeline**
+   - GitHub Actions running the full test suite across Python 3.10, 3.11, 3.12
+
+## Potential Further Improvements
+
+1. **Performance Optimization**
+   - Incremental crawling (skip already-indexed pages)
+   - Parallel request handling (within the politeness window)
+
+2. **Additional Features**
+   - Stemming/lemmatization to match word variants
+   - Stop word removal to reduce noise terms
+   - Search result snippets showing where terms appear
 
 ## References
 

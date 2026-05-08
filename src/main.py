@@ -256,18 +256,18 @@ Available Commands:
   print <word>        Print index information for a specific word
                      Example: print nonsense
 
-  find <words>        Find pages containing all specified words (AND query)
+  find <words>        Find pages matching a query (supports AND/OR/NOT and phrases)
                      Examples:
                        find indifference
                        find good friends
-                                             find "good friends"
-                                             find good OR friendship
-                                             find life AND NOT death
+                       find "good friends"
+                       find good OR friendship
+                       find life AND NOT death
 
-    rank <query>        Return TF-IDF ranked results for a query
-                                         Examples:
-                                             rank indifference
-                                             rank "good friends" OR life
+  rank <query>        Return TF-IDF ranked results for a query
+                     Examples:
+                       rank indifference
+                       rank "good friends" OR life
 
   help                Show this help message
 

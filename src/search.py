@@ -164,17 +164,19 @@ class SearchEngine:
 
     def find(self, query: str) -> List[str]:
         """
-        Search for pages containing query terms.
-        
+        Search for pages matching the query.
+
         Supports:
-        - Single word: "python" returns pages with "python"
-        - Multiple words: "good friends" returns pages with BOTH words (AND query)
-        
+        - Single word: "python"
+        - Implicit AND: "good friends" → pages containing both words
+        - Phrase: '"good friends"' → consecutive token match
+        - Boolean: AND, OR, NOT with optional parentheses
+
         Args:
             query: Search query string
-            
+
         Returns:
-            List of URLs matching the query
+            List of URLs matching the query, sorted alphabetically
         """
         if not query or not query.strip():
             logger.warning("Empty query provided")

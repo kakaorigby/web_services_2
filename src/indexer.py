@@ -64,27 +64,6 @@ class InvertedIndex:
         
         return words
     
-    def _get_word_positions(self, text: str, word: str) -> List[int]:
-        """
-        Find all positions of a word in text.
-        
-        Args:
-            text: Text to search in (should be lowercase)
-            word: Word to find (lowercase)
-            
-        Returns:
-            List of character positions where word appears
-        """
-        positions = []
-        start = 0
-        while True:
-            pos = text.find(word, start)
-            if pos == -1:
-                break
-            positions.append(pos)
-            start = pos + 1
-        return positions
-    
     def index_page(self, url: str, content: str) -> None:
         """
         Add a page's content to the inverted index.
@@ -103,18 +82,18 @@ class InvertedIndex:
         # Lowercase content for position finding
         content_lower = content.lower()
         
-        # Count word frequencies and track positions
-        word_data: Dict[str, Tuple[int, List[int]]] = {}
-        
+        # Count word frequencies and track token positions.
+        # Use a mutable list [freq, positions] to avoid O(n²) list copies.
+        word_data: Dict[str, List] = {}
+
         for position, word in enumerate(words):
             if word not in word_data:
-                word_data[word] = (0, [])
-            
-            frequency, positions = word_data[word]
-            word_data[word] = (frequency + 1, positions + [position])
+                word_data[word] = [0, []]
+            word_data[word][0] += 1
+            word_data[word][1].append(position)
         
         # Add to index
-        for word, (frequency, positions) in word_data.items():
+        for word, (frequency, positions) in word_data.items():  # type: ignore[assignment]
             self.all_words.add(word)
             
             if word not in self.index:
